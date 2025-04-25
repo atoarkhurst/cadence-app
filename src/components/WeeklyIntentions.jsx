@@ -20,7 +20,8 @@ export default function WeeklyIntentions() {
     };
 
     const handleSubmit = () => {
-        console.log("Submitted intentions:", intentions);
+        if (intentions.some((i) => !i.trim())) return alert("Fill all 3 first 🙂");
+        alert("Intentions saved-good luck this week!");
     };
 
     return (
