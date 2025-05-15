@@ -4,6 +4,8 @@ import { auth } from "./firebase";
 
 import WeeklyIntentions from "./components/WeeklyIntentions";
 import CheckIn from "./components/CheckIn";
+import CheckInHistory from "./components/CheckInHistory";
+
 import "./index.css";
 
 function App() {
@@ -44,7 +46,16 @@ function App() {
         </button>
       </div>
 
-      {view === "intentions" ? <WeeklyIntentions /> : <CheckIn />}
+      {view === "intentions" ? (
+        <WeeklyIntentions />
+      ) : (
+        <>
+          <CheckIn />
+          {/* little spacer */}
+          <div className="mt-8" />
+          <CheckInHistory />
+        </>
+      )}
     </div>
   );
 }

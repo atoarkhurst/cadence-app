@@ -61,6 +61,7 @@ export default function CheckIn() {
 
     try {
       await addDoc(collection(db, "checkIns"), {
+        userId: auth.currentUser.uid,
         mood,
         reflection,
         progressUpdates,
