@@ -5,6 +5,7 @@ import { auth } from "./firebase";
 import WeeklyIntentions from "./components/WeeklyIntentions";
 import CheckIn from "./components/CheckIn";
 import CheckInHistory from "./components/CheckInHistory";
+
 import "./index.css";
 
 function App() {
