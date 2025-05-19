@@ -54,13 +54,27 @@ export default function CheckInHistory() {
       {checkIns.map((ci) => (
         <div
           key={ci.id}
-          className="p-4 rounded-lg bg-gray-100 flex items-start space-x-4"
+          className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition flex items-start space-x-3 shadow-sm"
         >
-          <span className="text-3xl">{ci.mood}</span>
+          <span className="text-2xl">{ci.mood}</span>
 
           <div className="flex-1">
-            <div className="text-sm text-gray-500">{fmt(ci.createdAt)}</div>
-            {ci.reflection && <div className="mt-1">{ci.reflection}</div>}
+            <div className="text-xs text-gray-500">{fmt(ci.createdAt)}</div>
+
+            {ci.reflection && (
+              <p className="mt-1 text-sm leading-snug">{ci.reflection}</p>
+            )}
+            {/* show progress bullet points */}
+            {ci.progressUpdates && (
+              <ul className="mt-2 text-xs text-gray-600 space-y-1">
+                {Object.entries(ci.progressUpdates).map(([k, v]) => (
+                  <li key={k}>
+                    {k.replace(/_/g, " ").replace(/^\w/, (ch) => ch.toUpperCase())}:{" "}
+                    {typeof v === "boolean" ? (v ? "✔" : "✖") : v}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       ))}

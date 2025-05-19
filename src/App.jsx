@@ -50,10 +50,13 @@ function App() {
         <WeeklyIntentions />
       ) : (
         <>
-          <CheckIn />
-          {/* little spacer */}
-          <div className="mt-8" />
-          <CheckInHistory />
+         <div className="flex flex-col md:flex-row md:space-x-12 items-start">
+            <CheckIn />
+
+            <div className="mt-10 md:mt-0 w-full md:w-80">
+              <CheckInHistory />
+            </div>
+          </div>
         </>
       )}
     </div>

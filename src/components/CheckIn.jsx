@@ -78,7 +78,7 @@ export default function CheckIn() {
   };
 
   return (
-    <div className="w-full max-w-md p-6 bg-white shadow rounded-xl space-y-6">
+    <div className="w-full md:max-w-md p-6 bg-white shadow rounded-xl space-y-6">
       <h2 className="text-2xl font-semibold text-center"> Daily Check-In</h2>
       <div className="flex justify-between text-2xl">
         {["😄", "🙂", "😐", "😞", "😭"].map((m) => (
