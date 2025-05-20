@@ -18,6 +18,8 @@ export default function CheckIn() {
   const [reflection, setReflection] = useState("");
   const [progressUpdates, setProgressUpdates] = useState({});
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+
   useEffect(() => {
     const fetchIntentions = async () => {
       const userId = auth.currentUser?.uid;
@@ -44,6 +46,25 @@ export default function CheckIn() {
     };
 
     fetchIntentions();
+    const fetchToday = async () => {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+
+      const qToday = query(
+        collection(db, "checkIns"),
+        where("userId", "==", uid),
+        where("date", "==", todayStr),
+        limit(1)
+      );
+      const snap = await getDocs(qToday);
+      if (!snap.empty) {
+        const data = snap.docs[0].data();
+        setMood(data.mood || "");
+        setReflection(data.reflection || "");
+        setProgressUpdates(data.progressUpdates || {});
+      }
+    };
+    fetchToday();
   }, []);
 
   const handleChange = (key, value) => {
@@ -66,17 +87,27 @@ export default function CheckIn() {
         reflection,
         progressUpdates,
         createdAt: serverTimestamp(),
+        date: todayStr,
       });
       alert("Check-in saved!");
       setMood("");
       setReflection("");
-      setProgressUpdates({});
     } catch (error) {
       console.error("Error saving check-in:", error);
       alert("Something went wrong.");
     }
   };
 
+  if (intentions.length === 0) {
+    return (
+      <div className="w-full max-w-md p-6 text-center bg-white shadow rounded-xl">
+        <p className="text-gray-600">
+          No weekly intentions yet.<br />
+          Head to <span className="font-semibold">Weekly Setup</span> first!
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="w-full md:max-w-md p-6 bg-white shadow rounded-xl space-y-6">
       <h2 className="text-2xl font-semibold text-center"> Daily Check-In</h2>
@@ -110,11 +141,34 @@ export default function CheckIn() {
             return (
               <div key={idx}>
                 <label className="block mb-1 font-medium">{item.label}</label>
-                <input
-                  type="number"
-                  onChange={(e) => handleChange(key, Number(e.target.value))}
-                  className="w-full p-2 border rounded"
-                />
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleChange(key, Math.max(0, (progressUpdates[key] || 0) - 1))
+                    }
+                    className="px-3 py-1 bg-gray-200 rounded"
+                  >
+                    –
+                  </button>
+                  <input
+                   type="text"
+                   pattern="\d*"
+                   value={progressUpdates[key] ?? ""}
+                   onChange={(e) => handleChange(key, Number(e.target.value))}
+                   className="w-16 p-2 border rounded text-center"
+                   inputMode="numeric"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleChange(key, (progressUpdates[key] || 0) + 1)
+                    }
+                    className="px-3 py-1 bg-gray-200 rounded"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             );
           }
@@ -123,6 +177,7 @@ export default function CheckIn() {
               <div key={idx} className="flex items-center space-x-3">
                 <input
                   type="checkbox"
+                  checked={!!progressUpdates[key]}
                   onChange={(e) => handleChange(key, e.target.checked)}
                 />
                 <label>{item.label}</label>

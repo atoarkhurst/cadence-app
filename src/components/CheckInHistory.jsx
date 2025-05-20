@@ -17,28 +17,54 @@ function fmt(ts) {
   });
 }
 
+function niceKey(k) {
+  return k
+    .split("_")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export default function CheckInHistory() {
   const [checkIns, setCheckIns] = useState([]);
+  const [weeklyGoals, setWeeklyGoals] = useState({});
 
   useEffect(() => {
     async function fetchHistory() {
-      const uid = auth.currentUser?.uid;
-      if (!uid) return;
+      try {
+        const uid = auth.currentUser?.uid;
+        if (!uid) return;
 
-      // Build: /checkIns where userID == uid order by creaedat desc limit 5
-      const q = query(
-        collection(db, "checkIns"),
-        where("userId", "==", uid),
-        orderBy("createdAt", "desc"),
-        limit(5)
-      );
+        // 1. Fetch last 5 check‑ins
+        const checkInQ = query(
+          collection(db, "checkIns"),
+          where("userId", "==", uid),
+          orderBy("createdAt", "desc"),
+          limit(5)
+        );
+        const snap = await getDocs(checkInQ);
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setCheckIns(list);
 
-      const snap = await getDocs(q);
-      const list = snap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCheckIns(list);
+        // 2. Fetch latest weekly plan to get goal numbers
+        const weekQ = query(
+          collection(db, "weeklyIntentions"),
+          where("userId", "==", uid),
+          orderBy("createdAt", "desc"),
+          limit(1)
+        );
+        const weekSnap = await getDocs(weekQ);
+        if (!weekSnap.empty) {
+          const intentionsArr = weekSnap.docs[0].data().intentions || [];
+          const goalMap = {};
+          intentionsArr.forEach((i) => {
+            const key = i.label.toLowerCase().replace(/\s+/g, "_");
+            if (i.type === "count") goalMap[key] = i.goal;
+          });
+          setWeeklyGoals(goalMap);
+        }
+      } catch (err) {
+        console.error("Fetch history error →", err);
+      }
     }
     fetchHistory();
   }, []);
@@ -65,12 +91,20 @@ export default function CheckInHistory() {
               <p className="mt-1 text-sm leading-snug">{ci.reflection}</p>
             )}
             {/* show progress bullet points */}
-            {ci.progressUpdates && (
+            {ci.progressUpdates && Object.keys(ci.progressUpdates).length > 0 && (
               <ul className="mt-2 text-xs text-gray-600 space-y-1">
                 {Object.entries(ci.progressUpdates).map(([k, v]) => (
                   <li key={k}>
-                    {k.replace(/_/g, " ").replace(/^\w/, (ch) => ch.toUpperCase())}:{" "}
+                    {niceKey(k)}:{" "}
                     {typeof v === "boolean" ? (v ? "✔" : "✖") : v}
+                    {typeof v === "number" && weeklyGoals[k] && (
+                      <div className="h-1 bg-gray-200 rounded mt-1">
+                        <div
+                          className="h-full bg-indigo-500"
+                          style={{ width: `${Math.min(100, (v / weeklyGoals[k]) * 100)}%` }}
+                        />
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

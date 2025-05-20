@@ -12,7 +12,7 @@ import {
 
 const STORAGE_KEY = "cadence_intentions";
 
-export default function WeeklyIntentions() {
+export default function WeeklyIntentions({ onSaved }) {
   const [intentions, setIntentions] = useState([
     { label: "", type: "none", goal: "" },
     { label: "", type: "none", goal: "" },
@@ -84,6 +84,7 @@ export default function WeeklyIntentions() {
         createdAt: new Date(),
       });
       alert("Intentions saved to Firestore – good luck!");
+      if (onSaved) onSaved();      // auto‑navigate to Check‑In
     } catch (error) {
       console.error("Error saving intentions:", error);
       alert("Failed to save intentions. Try again.");

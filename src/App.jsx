@@ -9,7 +9,9 @@ import CheckInHistory from "./components/CheckInHistory";
 import "./index.css";
 
 function App() {
-  const [view, setView] = useState("intentions"); // move inside the component
+  const [view, setView] = useState(
+    () => localStorage.getItem("cadence_view") || "intentions"
+  );
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -29,7 +31,10 @@ function App() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
       <div className="absolute top-4 right-4 space-x-2">
         <button
-          onClick={() => setView("intentions")}
+          onClick={() => {
+            localStorage.setItem("cadence_view", "intentions");
+            setView("intentions");
+          }}
           className={`px-4 py-2 rounded ${
             view === "intentions" ? "bg-indigo-600 text-white" : "bg-gray-200"
           }`}
@@ -37,7 +42,10 @@ function App() {
           Weekly Setup
         </button>
         <button
-          onClick={() => setView("checkin")}
+          onClick={() => {
+            localStorage.setItem("cadence_view", "checkin");
+            setView("checkin");
+          }}
           className={`px-4 py-2 rounded ${
             view === "checkin" ? "bg-indigo-600 text-white" : "bg-gray-200"
           }`}
@@ -47,7 +55,7 @@ function App() {
       </div>
 
       {view === "intentions" ? (
-        <WeeklyIntentions />
+        <WeeklyIntentions onSaved={() => setView("checkin")} />
       ) : (
         <>
          <div className="flex flex-col md:flex-row md:space-x-12 items-start">
