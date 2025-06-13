@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { db, auth } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   query,
@@ -29,11 +30,9 @@ export default function CheckInHistory() {
   const [weeklyGoals, setWeeklyGoals] = useState({});
 
   useEffect(() => {
-    async function fetchHistory() {
+    async function fetchHistory(uid) {
       try {
-        const uid = auth.currentUser?.uid;
-        if (!uid) return;
-
+        
         // 1. Fetch last 5 check‑ins
         const checkInQ = query(
           collection(db, "checkIns"),
@@ -66,7 +65,10 @@ export default function CheckInHistory() {
         console.error("Fetch history error →", err);
       }
     }
-    fetchHistory();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) fetchHistory(user.uid);
+    });
+    return () => unsubscribe();
   }, []);
 
   return (

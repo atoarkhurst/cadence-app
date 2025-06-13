@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { auth } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   addDoc,
@@ -27,18 +28,13 @@ export default function WeeklyIntentions({ onSaved }) {
       setIntentions(saved);
     }
 
-    // Fetch from FireStore
-    const fetchSavedIntentions = async () => {
+    const fetchSavedIntentions = async (uid) => {
       try {
-        const userId = auth.currentUser?.uid;
-        if (!userId) return;
-
         const q = query(
           collection(db, "weeklyIntentions"),
-          where("userId", "==", userId),
+          where("userId", "==", uid),
           orderBy("createdAt", "desc")
         );
-        console.log("👤 Current user ID:", userId);
         const snapshot = await getDocs(q);
         const intentionsList = snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -50,7 +46,11 @@ export default function WeeklyIntentions({ onSaved }) {
       }
     };
 
-    fetchSavedIntentions();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) fetchSavedIntentions(user.uid);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleChange = (index, value) => {

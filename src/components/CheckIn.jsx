@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { auth } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   query,
@@ -21,35 +22,24 @@ export default function CheckIn() {
   const todayStr = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
-    const fetchIntentions = async () => {
-      const userId = auth.currentUser?.uid;
-      if (!userId) return;
-
+    const fetchIntentions = async (uid) => {
       const q = query(
         collection(db, "weeklyIntentions"),
-        where("userId", "==", userId),
+        where("userId", "==", uid),
         orderBy("createdAt", "desc"),
         limit(1)
       );
 
       const snapshot = await getDocs(q);
-      console.log("🔥 Fetched weekly intentions snapshot:", snapshot);
-
       if (!snapshot.empty) {
         const latest = snapshot.docs[0].data();
-        console.log("✅ Latest weekly doc:", latest);
-
         setIntentions(latest.intentions || []);
       } else {
         console.warn("❌ No weekly intentions found for user.");
       }
     };
 
-    fetchIntentions();
-    const fetchToday = async () => {
-      const uid = auth.currentUser?.uid;
-      if (!uid) return;
-
+    const fetchToday = async (uid) => {
       const qToday = query(
         collection(db, "checkIns"),
         where("userId", "==", uid),
@@ -64,8 +54,16 @@ export default function CheckIn() {
         setProgressUpdates(data.progressUpdates || {});
       }
     };
-    fetchToday();
-  }, []);
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchIntentions(user.uid);
+        fetchToday(user.uid);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [todayStr]);
 
   const handleChange = (key, value) => {
     setProgressUpdates((prev) => ({
